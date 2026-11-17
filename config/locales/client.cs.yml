@@ -3121,6 +3121,9 @@ cs:
         size_too_small: "%{provided_file_size} je menší než minimální povolená hodnota %{min_file_size}"
     emoji_picker:
       filter_placeholder: Hledat emoji
+      search_placeholder: "Hledat podle názvu emoji a aliasu..."
+      no_results: "Žádné výsledky"
+      favorites: "Často používané"
       smileys_&_emotion: Smajlíky a emoce
       people_&_body: Lidé a tělo
       animals_&_nature: Zvířata a příroda
@@ -3162,6 +3165,10 @@ cs:
       emoji: "Smajlíky :)"
       more_emoji: "více…"
       options: "Možnosti"
+      ai_content:
+        code: "Kód"
+        quote: "Citovat"
+        details: "Podrobnosti"
       whisper: "šeptat"
       unlist: "skryto"
       add_warning: "Toto je oficiální varování."
@@ -5599,6 +5606,17 @@ cs:
       forward: "Vpřed"
       share: "Sdílet"
       dismiss: "Označit jako přečtené"
+    mobile_tab_bar:
+      new_topic: "Nové téma"
+      create: "Vytvořit"
+      more: "Více"
+      back: "Zpět"
+      topics: "Témata"
+      drafts:
+        one: "Koncepty (%{count})"
+        few: "Koncepty (%{count})"
+        many: "Koncepty (%{count})"
+        other: "Koncepty (%{count})"
     safe_mode:
       enabled: "Bezpečný režim je povolený, k jeho zakázání zavřete toto okno prohlížeče"
     theme_preview_notice: "V současné době prohlížíte náhled motivu, zavřete tuto kartu nebo okno prohlížeče a vraťte se do normální konfigurace webu."
