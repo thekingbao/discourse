@@ -210,5 +210,61 @@ RSpec.describe DiscourseAi::Agents::Tools::Researcher do
       expect(results[:filter]).to eq("category:research-category username:#{user.username}")
       expect(results[:results].first).to include("Found: Relevant content 1")
     end
+
+    context "when a topic has a tag that only staff can see" do
+      subject(:research_prompt) do
+        DiscourseAi::Completions::Llm.with_prepared_responses(
+          [["Research completed"]],
+          llm: llm_model,
+        ) do |_, _, prompts|
+          researcher.invoke(&progress_blk)
+          prompts.first.messages.find { |message| message[:type] == :user }[:content]
+        end
+      end
+
+      fab!(:moderator) { Fabricate(:moderator, refresh_auto_groups: true) }
+      fab!(:staff_tag) { Fabricate(:tag, name: "staff-tag") }
+      fab!(:staff_tag_group) do
+        Fabricate(:tag_group, permissions: { "staff" => 1 }, tag_names: [staff_tag.name])
+      end
+
+      let(:researcher) do
+        described_class.new(
+          {
+            filter: "topic:#{topic_with_tags.id}",
+            goals: "analyze tagged content",
+            dry_run: false,
+          },
+          agent_options: {
+            "researcher_llm" => llm_model.id,
+          },
+          bot_user: bot_user,
+          llm: nil,
+          context: DiscourseAi::Agents::BotContext.new(user: requester, post: post),
+        )
+      end
+
+      before { topic_with_tags.tags = [tag_research, staff_tag] }
+
+      context "when the requester is a regular user" do
+        let(:requester) { user }
+
+        it "omits the tag from the research prompt" do
+          expect(research_prompt).not_to include(staff_tag.name)
+        end
+
+        it "keeps the public tag in the research prompt" do
+          expect(research_prompt).to include(tag_research.name)
+        end
+      end
+
+      context "when the requester is a staff member" do
+        let(:requester) { moderator }
+
+        it "omits the tag from the research prompt" do
+          expect(research_prompt).not_to include(staff_tag.name)
+        end
+      end
+    end
   end
 end

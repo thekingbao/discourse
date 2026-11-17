@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-#
-describe DiscourseAi::Utils::Research::LlmFormatter do
+
+RSpec.describe DiscourseAi::Utils::Research::LlmFormatter do
   fab!(:user) { Fabricate(:user, username: "test_user") }
   fab!(:topic) { Fabricate(:topic, title: "This is a Test Topic", user: user) }
   fab!(:post) { Fabricate(:post, topic: topic, user: user) }
@@ -71,6 +71,48 @@ describe DiscourseAi::Utils::Research::LlmFormatter do
 
       # Should include truncation marker
       expect(formatted).to include("... elided 150 tokens ...")
+    end
+  end
+
+  describe "#each_chunk" do
+    subject(:listed_tag_names) { research_text[/^Tags: (.*)$/, 1].to_s.split(", ") }
+
+    fab!(:public_tag) { Fabricate(:tag, name: "public-tag") }
+    fab!(:staff_tag) { Fabricate(:tag, name: "staff-tag") }
+    fab!(:staff_tag_group) do
+      Fabricate(:tag_group, permissions: { "staff" => 1 }, tag_names: [staff_tag.name])
+    end
+
+    let(:formatter) do
+      described_class.new(
+        filter,
+        max_tokens_per_batch: 1000,
+        tokenizer: tokenizer,
+        max_tokens_per_post: 100,
+      )
+    end
+    let(:research_text) { formatter.to_enum(:each_chunk).map { |chunk| chunk[:text] }.join }
+
+    before { topic.tags = [public_tag, staff_tag] }
+
+    it "lists the tags that an anonymous user can see" do
+      expect(listed_tag_names).to contain_exactly(public_tag.name)
+    end
+
+    context "when an anonymous user cannot see any tag of the topic" do
+      before { topic.tags = [staff_tag] }
+
+      it "omits the tags line" do
+        expect(research_text).not_to include("Tags:")
+      end
+    end
+
+    context "when tagging is disabled" do
+      before { SiteSetting.tagging_enabled = false }
+
+      it "omits the tags line" do
+        expect(research_text).not_to include("Tags:")
+      end
     end
   end
 end

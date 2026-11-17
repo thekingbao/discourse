@@ -9,6 +9,7 @@ module DiscourseAi
           @max_tokens_per_batch = max_tokens_per_batch
           @tokenizer = tokenizer
           @max_tokens_per_post = max_tokens_per_post
+          @anonymous_guardian = Guardian.new
           @to_process = filter_to_hash
         end
 
@@ -135,8 +136,12 @@ module DiscourseAi
           # Add category
           header << "Category: #{topic.category.name}\n" if topic.category
 
-          # Add tags
-          header << "Tags: #{topic.tags.map(&:name).join(", ")}\n" if topic.tags.present?
+          # The research output can reach readers other than the requester,
+          # so only the tags that an anonymous user can see are listed.
+          if @anonymous_guardian.can_see_tags?(topic)
+            public_tags = topic.visible_tags(@anonymous_guardian)
+            header << "Tags: #{public_tags.map(&:name).join(", ")}\n" if public_tags.present?
+          end
 
           # Add creation date
           header << "Created: #{format_date(topic.created_at)}\n"
